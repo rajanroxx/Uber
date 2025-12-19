@@ -18,20 +18,52 @@ const Signup = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const newUser = {
-      name: name,
-      email: email,
-      phone: phone,
-      password: password
-      };
 
-   const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/users/register`, newUser);
-    if (response.status === 201) {
-      const data = response.data;
+    // Define different base configurations based on the role
+    const isCaptain = role === 'captain';
+    const endpoint = isCaptain 
+      ? `${import.meta.env.VITE_API_URL}/api/captains/register` 
+      : `${import.meta.env.VITE_API_URL}/api/users/register`;
 
-      setUser(data.user)
+    // Construct the payload based on backend requirements
+    const payload = isCaptain ? {
+      name,
+      email,
+      password,
+      // The backend Captain model requires these specific nested fields
+      licenseNumber: "TEMP-LIC-" + Math.random().toString(36).substr(2, 9), // Suggest adding an input field for this
+      vehicleDetails: {
+        model: vehicleType,
+        make: "Standard", // Required by backend validation
+        year: 2024,       // Required by backend validation
+        color: "Black",    // Required by backend validation
+        licensePlate: vehicleNumber
+      }
+    } : {
+      name,
+      email,
+      phone,
+      password
+    };
 
-      navigate('/home');
+    try {
+      const response = await axios.post(endpoint, payload);
+      
+      if (response.status === 201) {
+        const data = response.data;
+        
+        // Store the token in localStorage to persist the session
+        localStorage.setItem('token', data.token); 
+        
+        // Update context with the returned user/captain data
+        setUser(data);
+
+        // Redirect to appropriate home page
+        navigate('/home');
+      }
+    } catch (err) {
+      console.error("Signup Error:", err.response?.data || err.message);
+      alert(err.response?.data?.message || "Registration failed. Please check your details.");
     }
   };
 
