@@ -19,7 +19,7 @@ const registerUser = async (req, res) => {
     return res.status(400).json({ errors: errors.array() });
   }
 
-  const { name, email, password } = req.body;
+  const { name, email, phone, password } = req.body;
 
   try {
     const userExists = await User.findOne({ email });
@@ -32,6 +32,7 @@ const registerUser = async (req, res) => {
       name,
       email,
       password,
+      phone
     });
 
     if (user) {
@@ -39,6 +40,7 @@ const registerUser = async (req, res) => {
         _id: user._id,
         name: user.name,
         email: user.email,
+        phone: user.phone,
         token: generateToken(user._id),
       });
     } else {
